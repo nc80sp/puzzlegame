@@ -6,6 +6,16 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SlidePuzzleScene3.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
-  m_configObjects: {}
+    path: Assets/Scenes/Title.unity
+    guid: bc59350af5d8ba242b7b5e37fa7f647a
+  - enabled: 1
+    path: Assets/Scenes/LoadStage.unity
+    guid: fbb94dbf8824b4b43bc35be80727bab2
+  - enabled: 1
+    path: Assets/Scenes/SelectStage.unity
+    guid: dae96e0034c0cc74eba648ab460f0d86
+  - enabled: 1
+    path: Assets/Scenes/Game.unity
+    guid: ccb94baf82f947f4e9d9275472beea55
+  m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 2589bbf349f5ae848a89699295a52dfd, type: 2}
