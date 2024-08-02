@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 5b4c66370dc75ce4298ae494ae89e71d
   m_currentHash:
     serializedVersion: 2
-    Hash: 28ebfbc46a55dea0adb9de5bcb6e2047
+    Hash: 065cce7060d43c4f54b29c043306bc21
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 1
   m_BundleLocalCatalog: 0
@@ -129,7 +129,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8bb3499b005081040b7b8fa0772b41ca, type: 2}
   - {fileID: 11400000, guid: 7c95dffb0c640084880f9681e6fcd2ad, type: 2}
   - {fileID: 11400000, guid: 3401c5bdf22a8ab4491fd505bb5b588b, type: 2}
-  m_ActiveProfileId: c081d7cb3b557a349ad20f594b58bbc0
+  m_ActiveProfileId: d8a3cd9d4364ded43a8261af1eefa419
   m_HostingServicesManager:
     m_HostingServiceInfos:
     - classRef: UnityEditor.AddressableAssets.HostingServices.HttpHostingService,

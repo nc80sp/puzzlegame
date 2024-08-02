@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AuthUserResponse : MonoBehaviour
+public class AuthUserResponse
 {
     public string token;
     public int id;

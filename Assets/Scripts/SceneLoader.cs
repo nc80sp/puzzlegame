@@ -12,6 +12,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 public class SceneLoader : MonoBehaviour
 {
@@ -52,12 +53,12 @@ public class SceneLoader : MonoBehaviour
         loadingSlider.value = 100;
         Addressables.Release(downloadHandle); //Release the operation handle
 
-        StartCoroutine(StartStage());
+        StartStage();
     }
 
-    IEnumerator StartStage()
+    async void StartStage()
     {
-        yield return new WaitForSeconds(0.5f);
+        await Task.Delay(500);
 
         Initiate.Fade("SelectStage", Color.black, 1.0f);
     }

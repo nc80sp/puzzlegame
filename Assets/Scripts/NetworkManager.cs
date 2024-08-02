@@ -3,27 +3,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.SocialPlatforms.Impl;
+using UnityEngine.UI;
 
-public class NetworkManager
+public class NetworkManager : Singleton<NetworkManager>
 {
     const string API_URL = "https://api-slidepuzzle.japaneast.cloudapp.azure.com/api/";
-
-    private static NetworkManager instance;
-    public static NetworkManager Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                instance = new NetworkManager();
-            }
-            return instance;
-        }
-    }
 
     public Stage[] stages;
     private int userID;
@@ -44,12 +30,12 @@ public class NetworkManager
         Writer.Close();
     }
 
-    public async void LoadUser()
+    public void LoadUser(Action<bool> result)
     {
         if (!File.Exists(Application.persistentDataPath + "/saveData.json"))
         {
             //登録
-            await RegistUser(Guid.NewGuid().ToString(), Guid.NewGuid().ToString());
+            StartCoroutine(RegistUser(Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), result));
         }
         else
         {
@@ -62,22 +48,23 @@ public class NetworkManager
             userName = userSaveData.UserName;
             string password = userSaveData.password;
 
-            await LoginUser(userName, password);
+            StartCoroutine(LoginUser(userName, password, result));
         }
     }
 
-    public async void LoadMasterData()
+    public IEnumerator LoadMasterData(Action<bool> response)
     {
         UnityWebRequest request = UnityWebRequest.Get(API_URL + "stages");
-        await request.SendWebRequest();
+        yield return request.SendWebRequest();
         if (request.result == UnityWebRequest.Result.Success)
         {
             string json = request.downloadHandler.text;
             stages = JsonConvert.DeserializeObject<Stage[]>(json);
         }
+        response?.Invoke(request.result == UnityWebRequest.Result.Success);
     }
 
-    private async Task RegistUser(string name, string password)
+    private IEnumerator RegistUser(string name, string password, Action<bool> response)
     {
         var requestData = new
         {
@@ -92,24 +79,26 @@ public class NetworkManager
             API_URL + "register",
             json,
             "application/json");
-        await request.SendWebRequest();
+        yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success)
         {
             //帰ってきたIDを保存
             string result = request.downloadHandler.text;
             Debug.Log(result);
-            AuthUserResponse response = JsonConvert.DeserializeObject<AuthUserResponse>(result);
-            userID = response.id;
-            userName = response.name;
-            authToken = response.token;
+            AuthUserResponse authResp = JsonConvert.DeserializeObject<AuthUserResponse>(result);
+            userID = authResp.id;
+            userName = authResp.name;
+            authToken = authResp.token;
 
             //次のログイン用に保存
             SaveUserData(userID, userName, password);
         }
+
+        response?.Invoke(request.result == UnityWebRequest.Result.Success);
     }
 
-    private async Task LoginUser(string name, string password)
+    private IEnumerator LoginUser(string name, string password, Action<bool> response)
     {
         var requestData = new
         {
@@ -121,31 +110,35 @@ public class NetworkManager
             API_URL + "login",
             json,
             "application/json");
-        await request.SendWebRequest();
+        yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success)
         {
             //帰ってきたIDを保存
             string result = request.downloadHandler.text;
-            AuthUserResponse response = JsonConvert.DeserializeObject<AuthUserResponse>(result);
-            userID = response.id;
-            authToken = response.token;
+            AuthUserResponse authResp = JsonConvert.DeserializeObject<AuthUserResponse>(result);
+            userID = authResp.id;
+            authToken = authResp.token;
         }
+        response?.Invoke(request.result == UnityWebRequest.Result.Success);
     }
 
-    public async Task<UserStage[]> GetUserStage()
+    public IEnumerator GetUserStage(Action<UserStage[]> response)
     {
         UnityWebRequest request = UnityWebRequest.Get(API_URL + "stages/" + userID);
-        await request.SendWebRequest();
+        yield return request.SendWebRequest();
         if (request.result == UnityWebRequest.Result.Success)
         {
             string json = request.downloadHandler.text;
-            return JsonConvert.DeserializeObject<UserStage[]>(json);
+            response?.Invoke(JsonConvert.DeserializeObject<UserStage[]>(json));
         }
-        return null;
+        else
+        {
+            response?.Invoke(null);
+        }
     }
 
-    public async Task SendUserStage(int stageId, float clearTime)
+    public IEnumerator SendUserStage(int stageId, float clearTime, Action<bool> response)
     {
         var requestData = new
         {
@@ -159,18 +152,23 @@ public class NetworkManager
             json,
             "application/json");
         request.SetRequestHeader("Authorization", "Bearer " + authToken);
-        await request.SendWebRequest();
+        yield return request.SendWebRequest();
+
+        response?.Invoke(request.result == UnityWebRequest.Result.Success);
     }
 
-    public async Task<StageRecordResponse> GetStageRecord(int stageId)
+    public IEnumerator GetStageRecord(int stageId, Action<StageRecordResponse> response)
     {
         UnityWebRequest request = UnityWebRequest.Get(API_URL + "stages/record?user_id=" + userID + "&stage_id=" + stageId);
-        await request.SendWebRequest();
+        yield return request.SendWebRequest();
         if (request.result == UnityWebRequest.Result.Success)
         {
             string json = request.downloadHandler.text;
-            return JsonConvert.DeserializeObject<StageRecordResponse>(json);
+            response?.Invoke(JsonConvert.DeserializeObject<StageRecordResponse>(json));
         }
-        return null;
+        else
+        {
+            response?.Invoke(null);
+        }
     }
 }

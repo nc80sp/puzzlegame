@@ -10,6 +10,8 @@ public class TitleManager : MonoBehaviour
 {
     [SerializeField] GameObject touchToStart;
     bool isStart = false;
+    [SerializeField] AudioSource audioSource;
+    [SerializeField] AudioClip touchSE;
 
     // Start is called before the first frame update
     void Start()
@@ -23,19 +25,28 @@ public class TitleManager : MonoBehaviour
     {
         if (Input.GetMouseButtonUp(0) && !isStart)
         {
+            audioSource.PlayOneShot(touchSE);
             touchToStart.SetActive(false);
             isStart = true;
-            StartCoroutine(startGame());
+            startGame();
         }
     }
 
-    IEnumerator startGame()
+    void startGame()
     {
         //最初にステージ一覧マスタ取得
-        NetworkManager.Instance.LoadMasterData();
+        StartCoroutine(NetworkManager.Instance.LoadMasterData(result =>
+        {
+            //ユーザーデータのロード
+            NetworkManager.Instance.LoadUser(result =>
+            {
+                StartCoroutine(checkCatalog());
+            });
+        }));
+    }
 
-        NetworkManager.Instance.LoadUser();
-
+    IEnumerator checkCatalog()
+    {
         var checkHandle = Addressables.CheckForCatalogUpdates(false);
         yield return checkHandle;
 

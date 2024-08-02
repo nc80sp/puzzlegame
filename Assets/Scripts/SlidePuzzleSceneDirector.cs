@@ -1,8 +1,10 @@
 using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Profiling;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -38,10 +40,20 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
     [SerializeField] Text worldRecordText;
     StageRecordResponse records;
 
+    //BGM
+    [SerializeField] AudioSource bgmAudioSource;
+    [SerializeField] AudioSource seAudioSource;
+    [SerializeField] AudioClip gameOverJingle;
+    [SerializeField] AudioClip gameClearJingle;
+    [SerializeField] AudioClip panelMoveSE;
+    [SerializeField] AudioClip countDown1SE;
+    [SerializeField] AudioClip countDown2SE;
+    [SerializeField] AudioClip gameClearEffectSE;
+    [SerializeField] AudioClip buttonSE;
+
     // Start is called before the first frame update
-    async void Start()
+    void Start()
     {
-        
         // ボタン非表示
         buttonBack.SetActive(false);
         buttonRetry.SetActive(false);
@@ -56,47 +68,49 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
         newRecordText.enabled = false;
         myRecordText.text = "";
         worldRecordText.text = "";
-        records = await NetworkManager.Instance.GetStageRecord(StageSelector.SelectStageNo);
-        myRecordText.text = (records.My_record == 0) ? "--.---" : records.My_record.ToString("00.000");
-        worldRecordText.text = (records.World_record == 0) ? "--.---" : records.World_record.ToString("00.000");
-
-        //ステージ読み込み
-        Addressables.LoadSceneAsync("Stage" + StageSelector.SelectStageNo.ToString(), LoadSceneMode.Additive).Completed += op =>
+        StartCoroutine(NetworkManager.Instance.GetStageRecord(StageSelector.SelectStageNo, response =>
         {
-            pieces = new List<GameObject>(GameObject.FindGameObjectsWithTag("Piece"));
-            pieces.Sort((a,b) => string.Compare(a.name, b.name));
+            records = response;
+            myRecordText.text = (records.My_record == 0) ? "--.---" : records.My_record.ToString("00.000");
+            worldRecordText.text = (records.World_record == 0) ? "--.---" : records.World_record.ToString("00.000");
 
-            // 初期位置を保存
-            startPositions = new List<Vector2>();
-            foreach (var item in pieces)
+            //ステージ読み込み
+            Addressables.LoadSceneAsync("Stage" + StageSelector.SelectStageNo.ToString(), LoadSceneMode.Additive).Completed += op =>
             {
-                startPositions.Add(item.transform.position);
-            }
+                pieces = new List<GameObject>(GameObject.FindGameObjectsWithTag("Piece"));
+                pieces.Sort((a, b) => string.Compare(a.name, b.name));
 
-            // 指定回数シャッフル
-            for (int i = 0; i < shuffleCount; i++)
-            {
-                // 0番と隣接するピース
-                List<GameObject> movablePieces = new List<GameObject>();
-
-                // 0番と隣接するピースをリストに追加
+                // 初期位置を保存
+                startPositions = new List<Vector2>();
                 foreach (var item in pieces)
                 {
-                    if (GetEmptyPiece(item) != null)
-                    {
-                        movablePieces.Add(item);
-                    }
+                    startPositions.Add(item.transform.position);
                 }
 
-                // 隣接するピースをランダムで入れかえる
-                int rnd = Random.Range(0, movablePieces.Count);
-                GameObject piece = movablePieces[rnd];
-                SwapPiece(piece, pieces[0]);
-            }
+                // 指定回数シャッフル
+                for (int i = 0; i < shuffleCount; i++)
+                {
+                    // 0番と隣接するピース
+                    List<GameObject> movablePieces = new List<GameObject>();
 
-        };
+                    // 0番と隣接するピースをリストに追加
+                    foreach (var item in pieces)
+                    {
+                        if (GetEmptyPiece(item) != null)
+                        {
+                            movablePieces.Add(item);
+                        }
+                    }
 
-        StartCoroutine(StartCountDown());
+                    // 隣接するピースをランダムで入れかえる
+                    int rnd = Random.Range(0, movablePieces.Count);
+                    GameObject piece = movablePieces[rnd];
+                    SwapPiece(piece, pieces[0]);
+                }
+
+                StartCoroutine(StartCountDown());
+            };
+        }));
     }
 
     IEnumerator StartCountDown()
@@ -104,22 +118,28 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
         yield return new WaitForSeconds(1.0f);
 
         countDownText.text = "3";
+        seAudioSource.PlayOneShot(countDown1SE);
         yield return new WaitForSeconds(1.0f);
 
         countDownText.text = "2";
+        //seAudioSource.PlayOneShot(countDown1SE);
         yield return new WaitForSeconds(1.0f);
 
         countDownText.text = "1";
+        //seAudioSource.PlayOneShot(countDown1SE);
         yield return new WaitForSeconds(1.0f);
 
+        //seAudioSource.PlayOneShot(countDown2SE);
         countDownText.gameObject.SetActive(false);
         isPlaying = true;
         buttonRetry.SetActive(true);
         buttonBack.SetActive(true);
+
+        bgmAudioSource.Play();
     }
 
     // Update is called once per frame
-    async void Update()
+    void Update()
     {
         if (!isPlaying)
         {
@@ -135,6 +155,8 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
             isPlaying = false;
             gameOverText.SetActive(true);
             buttonBack.SetActive(true);
+            bgmAudioSource.Stop();
+            seAudioSource.PlayOneShot(gameOverJingle);
         }
         timerText.text = timer.ToString("00.000");
 
@@ -149,6 +171,7 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
             // 当たり判定があった
             if(hit2d)
             {
+                seAudioSource.PlayOneShot(panelMoveSE);
                 // ヒットしたゲームオブジェクト
                 GameObject hitPiece = hit2d.collider.gameObject;
                 // 0番のピースと隣接していればデータが入る
@@ -177,6 +200,8 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
                 {
                     Debug.Log("クリア！！");
                     isPlaying = false;
+                    bgmAudioSource.Stop();
+                    seAudioSource.PlayOneShot(gameClearJingle);
                     StartCoroutine(DisplayClearEffect());
                     clearText.SetActive(true);
                     if (records.My_record > timer)
@@ -184,7 +209,10 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
                         newRecordText.enabled = true;
                         newRecordText.GetComponent<Text>().DOFade(0, 0.5f).SetEase(Ease.Linear).SetLoops(-1, LoopType.Yoyo);
                     }
-                    await NetworkManager.Instance.SendUserStage(StageSelector.SelectStageNo, timer);
+                    StartCoroutine(NetworkManager.Instance.SendUserStage(StageSelector.SelectStageNo, timer, response =>
+                    {
+                        //送信後処理（何かあれば）
+                    }));
                 }
             }
         }
@@ -199,6 +227,7 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
             float x = Random.Range(0, 2) - 1.0f;
             float y = Random.Range(1, 4) - 1.0f;
             Instantiate(clearEffect, new Vector3(x,y,-1),Quaternion.identity);
+            seAudioSource.PlayOneShot(gameClearEffectSE);
         }
     }
 
@@ -237,11 +266,13 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
     public void OnClickRetry()
     {
         Initiate.Fade("Game", Color.black, 3.0f);
+        seAudioSource.PlayOneShot(buttonSE);
     }
 
     // 戻るボタン
     public void OnClickBack()
     {
         Initiate.Fade("SelectStage", Color.black, 1.5f);
+        seAudioSource.PlayOneShot(buttonSE);
     }
 }
