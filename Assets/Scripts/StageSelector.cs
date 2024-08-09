@@ -19,7 +19,7 @@ public class StageSelector : MonoBehaviour
             int maxClearStage = 0;
             foreach (var stage in userStages)
             {
-                maxClearStage = (maxClearStage > stage.Stage_id) ? maxClearStage : stage.Stage_id;
+                maxClearStage = (maxClearStage > stage.StageID) ? maxClearStage : stage.StageID;
             }
             //クリアステージ+1まで表示
             for (int i = 1; i <= maxClearStage + 1; i++)

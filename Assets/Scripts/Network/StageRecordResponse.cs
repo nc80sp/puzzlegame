@@ -1,9 +1,12 @@
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class StageRecordResponse
 {
-    public float My_record;
-    public float World_record;
+    [JsonProperty("my_record")]
+    public float MyRecord;
+    [JsonProperty("world_record")]
+    public float WorldRecord;
 }

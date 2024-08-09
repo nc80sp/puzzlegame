@@ -5,10 +5,25 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
-public class NetworkManager : Singleton<NetworkManager>
+public class NetworkManager : MonoBehaviour
 {
+    private static NetworkManager instance;
+    public static NetworkManager Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                GameObject gameObj = new GameObject("NetworkManager");
+                instance = gameObj.AddComponent<NetworkManager>();
+                DontDestroyOnLoad(gameObj);
+            }
+            return instance;
+        }
+    }
+
+
     const string API_URL = "https://api-slidepuzzle.japaneast.cloudapp.azure.com/api/";
 
     public Stage[] stages;
@@ -172,3 +187,4 @@ public class NetworkManager : Singleton<NetworkManager>
         }
     }
 }
+

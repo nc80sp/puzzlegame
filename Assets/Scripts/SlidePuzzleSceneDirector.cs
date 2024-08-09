@@ -64,15 +64,15 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
         countDownText.text = "";
         timerText.text = timer.ToString("00.000");
         limitTimerText.text = "/" +
-            NetworkManager.Instance.stages[StageSelector.SelectStageNo - 1].Limit_Time.ToString("00.000");
+            NetworkManager.Instance.stages[StageSelector.SelectStageNo - 1].LimitTime.ToString("00.000");
         newRecordText.enabled = false;
         myRecordText.text = "";
         worldRecordText.text = "";
         StartCoroutine(NetworkManager.Instance.GetStageRecord(StageSelector.SelectStageNo, response =>
         {
             records = response;
-            myRecordText.text = (records.My_record == 0) ? "--.---" : records.My_record.ToString("00.000");
-            worldRecordText.text = (records.World_record == 0) ? "--.---" : records.World_record.ToString("00.000");
+            myRecordText.text = (records.MyRecord == 0) ? "--.---" : records.MyRecord.ToString("00.000");
+            worldRecordText.text = (records.WorldRecord == 0) ? "--.---" : records.WorldRecord.ToString("00.000");
 
             //ステージ読み込み
             Addressables.LoadSceneAsync("Stage" + StageSelector.SelectStageNo.ToString(), LoadSceneMode.Additive).Completed += op =>
@@ -147,9 +147,9 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
         }
 
         timer += Time.deltaTime;
-        if (timer >= NetworkManager.Instance.stages[StageSelector.SelectStageNo - 1].Limit_Time)
+        if (timer >= NetworkManager.Instance.stages[StageSelector.SelectStageNo - 1].LimitTime)
         {
-            timer = NetworkManager.Instance.stages[StageSelector.SelectStageNo - 1].Limit_Time;
+            timer = NetworkManager.Instance.stages[StageSelector.SelectStageNo - 1].LimitTime;
 
             // ゲームオーバー処理
             isPlaying = false;
@@ -204,7 +204,7 @@ public class SlidePuzzleSceneDirector : MonoBehaviour
                     seAudioSource.PlayOneShot(gameClearJingle);
                     StartCoroutine(DisplayClearEffect());
                     clearText.SetActive(true);
-                    if (records.My_record > timer)
+                    if (records.MyRecord > timer)
                     {
                         newRecordText.enabled = true;
                         newRecordText.GetComponent<Text>().DOFade(0, 0.5f).SetEase(Ease.Linear).SetLoops(-1, LoopType.Yoyo);
